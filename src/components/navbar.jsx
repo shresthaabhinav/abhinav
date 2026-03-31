@@ -1,33 +1,31 @@
 "use client";
-
-import Link from "next/link";
 import { FaHome } from "react-icons/fa";
 import { useState, useEffect, useRef } from "react";
 import OverlayMenu from "./overlayMenu";
 
 const links = [
-  { href: "#about", label: "About" },
-  { href: "#skills", label: "Skills" },
-  { href: "#gallery", label: "Gallery" },
-  { href: "#projects", label: "Projects" },
-  { href: "#experience", label: "Experience" },
-  { href: "#contact", label: "Contact" },
+  { target: "about",      label: "About" },
+  { target: "skills",     label: "Skills" },
+  { target: "projects",   label: "Projects" },
+  { target: "experience", label: "Experience" },
+  { target: "gallery",    label: "Gallery" },
 ];
 
-export default function Navbar() {
-  const [active, setActive] = useState("");
-  const [scrolled, setScrolled] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-  const [highlight, setHighlight] = useState({
-    left: 0,
-    width: 0,
-    opacity: 0,
-  });
+// All sections including hero — order matters for priority
+const allSections = ["hero", ...links.map((l) => l.target)];
 
-  const homeRef = useRef(null);
-  const navRef = useRef(null);
-  const linkRefs = useRef([]);
+export default function Navbar({ sectionRefs = {} }) {
+  const [active, setActive]       = useState("hero");
+  const [scrolled, setScrolled]   = useState(false);
+  const [isMobile, setIsMobile]   = useState(false);
+  const [highlight, setHighlight] = useState({ left: 0, width: 0, opacity: 0 });
+
+  const homeRef    = useRef(null);
+  const navRef     = useRef(null);
+  const linkRefs   = useRef([]);
   const overlayRef = useRef(null);
+  const activePos  = useRef({ left: 0, width: 0, opacity: 0 });
+  const intersectingSet = useRef(new Set());
 
   // scroll shadow
   useEffect(() => {
@@ -44,90 +42,103 @@ export default function Navbar() {
     return () => window.removeEventListener("resize", check);
   }, []);
 
-  // get offset for highlight
   const getOffset = (el) => {
     if (!el || !navRef.current) return null;
     const navRect = navRef.current.getBoundingClientRect();
-    const elRect = el.getBoundingClientRect();
-    return {
-      left: elRect.left - navRect.left,
-      width: elRect.width,
-    };
+    const elRect  = el.getBoundingClientRect();
+    return { left: elRect.left - navRect.left, width: elRect.width };
   };
 
-  // home snap
-  const snapToHome = () => {
-    const pos = getOffset(homeRef.current);
-    if (!pos) return;
-    setHighlight({ ...pos, opacity: 1 });
+  const moveTo       = (el) => { const pos = getOffset(el); if (!pos) return; setHighlight({ ...pos, opacity: 0.6 }); };
+  const restoreActive = () => setHighlight(activePos.current);
+
+  const scrollToSection = (target) => {
+    if (target === "hero") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      setActive("hero");
+      return;
+    }
+    const section = sectionRefs[target]?.current || document.getElementById(target);
+    if (!section) return;
+    section.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(target);
   };
 
-  // hover preview (DOES NOT override active section)
-  const moveTo = (el) => {
+  const resolveEl = (target) => {
+    if (target === "hero") return homeRef.current;
+    const index = links.findIndex((l) => l.target === target);
+    return index !== -1 ? linkRefs.current[index] : null;
+  };
+
+  // sync highlight with active
+  useEffect(() => {
+    const el = resolveEl(active);
+    if (!el) return;
     const pos = getOffset(el);
     if (!pos) return;
-
-    setHighlight((prev) => ({
-      ...pos,
-      opacity: 0.6,
-    }));
-  };
+    const next = { ...pos, opacity: 1 };
+    activePos.current = next;
+    setHighlight(next);
+  }, [active]);
 
   // initial highlight
   useEffect(() => {
     if (!isMobile && homeRef.current && navRef.current) {
-      snapToHome();
+      const pos = getOffset(homeRef.current);
+      if (!pos) return;
+      const next = { ...pos, opacity: 1 };
+      activePos.current = next;
+      setHighlight(next);
     }
   }, [isMobile]);
 
-  // Intersection Observer (ACTIVE SECTION CONTROL)
+  // Intersection Observer
   useEffect(() => {
-    const sections = links.map((l) => document.querySelector(l.href));
+    const sectionEls = allSections
+      .map((name) => {
+        const refEl      = sectionRefs[name]?.current;
+        const fallbackEl = document.getElementById(name);
+        return { name, el: refEl || fallbackEl };
+      })
+      .filter((s) => s.el);
 
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
+          const sectionName =
+            entry.target.id ||
+            Object.keys(sectionRefs).find(
+              (k) => sectionRefs[k]?.current === entry.target
+            );
+          if (!sectionName) return;
           if (entry.isIntersecting) {
-            setActive(`#${entry.target.id}`);
+            intersectingSet.current.add(sectionName);
+          } else {
+            intersectingSet.current.delete(sectionName);
           }
         });
+        const current = allSections.find((name) =>
+          intersectingSet.current.has(name)
+        );
+        if (current) setActive(current);
       },
-      { threshold: 0.6 }
+      { threshold: 0.4 }
     );
 
-    sections.forEach((sec) => sec && observer.observe(sec));
-
+    sectionEls.forEach(({ el }) => observer.observe(el));
     return () => observer.disconnect();
-  }, []);
-
-  // sync highlight with active section
-  useEffect(() => {
-    const index = links.findIndex((l) => l.href === active);
-    if (index === -1) return;
-
-    const el = linkRefs.current[index];
-    if (!el) return;
-
-    const pos = getOffset(el);
-    if (!pos) return;
-
-    setHighlight({ ...pos, opacity: 1 });
-  }, [active]);
+  }, [sectionRefs]);
 
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&display=swap');
-
         .navbar-wrap {
           position: fixed;
-          top: 24px;
+          top: 12px;
           left: 50%;
           transform: translateX(-50%);
           z-index: 50;
-          font-family: 'DM Mono', monospace;
         }
-
         .navbar {
           position: relative;
           display: flex;
@@ -139,11 +150,9 @@ export default function Navbar() {
           border: 1px solid rgba(255,255,255,0.08);
           border-radius: 999px;
         }
-
         .navbar.scrolled {
           background: rgba(6, 6, 10, 0.9);
         }
-
         .nav-highlight {
           position: absolute;
           top: 6px;
@@ -154,7 +163,6 @@ export default function Navbar() {
           pointer-events: none;
           transition: left 0.25s ease, width 0.25s ease, opacity 0.2s ease;
         }
-
         .nav-home {
           display: flex;
           align-items: center;
@@ -163,14 +171,15 @@ export default function Navbar() {
           height: 36px;
           border-radius: 50%;
           color: rgba(255,255,255,0.6);
+          background: transparent;
+          border: none;
+          cursor: pointer;
         }
-
         .nav-divider {
           width: 1px;
           height: 18px;
           background: rgba(255,255,255,0.1);
         }
-
         .nav-link {
           display: flex;
           align-items: center;
@@ -178,17 +187,66 @@ export default function Navbar() {
           border-radius: 999px;
           font-size: 12px;
           text-transform: uppercase;
+          letter-spacing: 0.05em;
           color: rgba(255,255,255,0.45);
-          text-decoration: none;
+          background: transparent;
+          border: none;
+          cursor: pointer;
           transition: color 0.2s ease;
         }
+        .nav-link:hover { color: rgba(255,255,255,0.95); }
+        .nav-link.active { color: #fff; }
 
-        .nav-link:hover {
-          color: rgba(255,255,255,0.95);
+        /* Mobile */
+        .navbar-mobile {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          padding: 6px 8px;
+          background: rgba(8, 8, 12, 0.75);
+          backdrop-filter: blur(20px);
+          border: 1px solid rgba(255,255,255,0.08);
+          border-radius: 999px;
         }
-
-        .nav-link.active {
-          color: #fff;
+        .navbar-mobile.scrolled {
+          background: rgba(6, 6, 10, 0.9);
+        }
+        .mob-home {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 36px;
+          height: 36px;
+          border-radius: 50%;
+          color: rgba(255,255,255,0.6);
+          background: transparent;
+          border: none;
+          cursor: pointer;
+        }
+        .mob-divider {
+          width: 1px;
+          height: 18px;
+          background: rgba(255,255,255,0.1);
+        }
+        .mob-bars {
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          gap: 5px;
+          width: 36px;
+          height: 36px;
+          padding: 8px;
+          background: transparent;
+          border: none;
+          cursor: pointer;
+        }
+        .mob-bar {
+          display: block;
+          width: 100%;
+          height: 1.5px;
+          border-radius: 2px;
+          background: rgba(255,255,255,0.65);
+          transition: transform 0.25s ease, opacity 0.25s ease;
         }
       `}</style>
 
@@ -198,38 +256,37 @@ export default function Navbar() {
           <nav
             ref={navRef}
             className={`navbar${scrolled ? " scrolled" : ""}`}
+            onMouseLeave={restoreActive}
           >
             <div
               className="nav-highlight"
               style={{
-                left: highlight.left,
-                width: highlight.width,
+                left:    highlight.left,
+                width:   highlight.width,
                 opacity: highlight.opacity,
               }}
             />
-
-            <Link
-              href="/"
+            <button
               ref={homeRef}
               className="nav-home"
               onMouseEnter={() => moveTo(homeRef.current)}
+              onClick={() => scrollToSection("hero")}
+              type="button"
             >
               <FaHome />
-            </Link>
-
+            </button>
             <div className="nav-divider" />
-
-            {links.map(({ href, label }, i) => (
-              <Link
-                key={href}
-                href={href}
+            {links.map(({ target, label }, i) => (
+              <button
+                key={target}
                 ref={(el) => (linkRefs.current[i] = el)}
-                className={`nav-link${active === href ? " active" : ""}`}
-                onClick={() => setActive(href)}
+                className={`nav-link${active === target ? " active" : ""}`}
+                onClick={() => scrollToSection(target)}
                 onMouseEnter={() => moveTo(linkRefs.current[i])}
+                type="button"
               >
                 {label}
-              </Link>
+              </button>
             ))}
           </nav>
         </div>
@@ -240,22 +297,30 @@ export default function Navbar() {
         <>
           <div className="navbar-wrap">
             <div className={`navbar-mobile${scrolled ? " scrolled" : ""}`}>
-              <Link href="/" className="mob-home">
+              <button
+                className="mob-home"
+                onClick={() => scrollToSection("hero")}
+                type="button"
+              >
                 <FaHome />
-              </Link>
+              </button>
               <div className="mob-divider" />
               <button
                 className="mob-bars"
                 onClick={() => overlayRef.current?.openMenu()}
+                type="button"
               >
-                <span className="mob-bar mob-bar-1" />
-                <span className="mob-bar mob-bar-2" />
-                <span className="mob-bar mob-bar-3" />
+                <span className="mob-bar" />
+                <span className="mob-bar" />
+                <span className="mob-bar" />
               </button>
             </div>
           </div>
-
-          <OverlayMenu ref={overlayRef} />
+          <OverlayMenu
+            ref={overlayRef}
+            sectionRefs={sectionRefs}
+            onNavigate={setActive}
+          />
         </>
       )}
     </>

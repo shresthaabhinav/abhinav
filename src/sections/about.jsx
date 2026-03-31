@@ -75,7 +75,7 @@ export default function About() {
   }, []);
 
   return (
-    <section id="about" ref={sectionRef} className="relative py-20 bg-white">
+    <section id="about" ref={sectionRef} className="relative pt-20 bg-white">
       <div className="container mx-auto max-w-5xl px-6">
         {/* Heading */}
         <div className="flex flex-col items-center gap-3 mb-12">
@@ -84,9 +84,9 @@ export default function About() {
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
             viewport={{ once: true, amount: 0.5 }}
-            className="text-4xl sm:text-5xl md:text-6xl font-bold text-black"
+            className="text-3xl sm:text-5xl md:text-6xl font-bold text-black"
           >
-            About Me
+            About <span style={{ color: "#999999" }}>Me</span>
           </motion.h1>
         </div>
 

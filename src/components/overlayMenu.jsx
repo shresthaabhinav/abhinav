@@ -1,20 +1,21 @@
 "use client";
 
-import Link from "next/link";
 import { useState, useEffect, useImperativeHandle, forwardRef } from "react";
 import { FaHome } from "react-icons/fa";
 
 const links = [
-  { href: "#about", label: "About", num: "01" },
-  { href: "#skills", label: "Skills", num: "02" },
-  { href: "#gallery", label: "Gallery", num: "03" },
-  { href: "#projects", label: "Projects", num: "04" },
-  { href: "#experience", label: "Experience", num: "05" },
-  { href: "#contact", label: "Contact", num: "06" },
+  { target: "about",      label: "About",      num: "01" },
+  { target: "skills",     label: "Skills",     num: "02" },
+  { target: "projects",   label: "Projects",   num: "03" },
+  { target: "experience", label: "Experience", num: "04" },
+  { target: "gallery",    label: "Gallery",    num: "05" },
 ];
 
-const OverlayMenu = forwardRef(function OverlayMenu(props, ref) {
-  const [open, setOpen] = useState(false);
+const OverlayMenu = forwardRef(function OverlayMenu(
+  { sectionRefs = {}, onNavigate },
+  ref
+) {
+  const [open, setOpen]           = useState(false);
   const [animating, setAnimating] = useState(false);
 
   const openMenu = () => {
@@ -27,23 +28,34 @@ const OverlayMenu = forwardRef(function OverlayMenu(props, ref) {
     setTimeout(() => setOpen(false), 500);
   };
 
-  // Expose openMenu to parent via ref
   useImperativeHandle(ref, () => ({ openMenu }));
 
   // Lock body scroll when open
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
-    return () => {
-      document.body.style.overflow = "";
-    };
+    return () => { document.body.style.overflow = ""; };
   }, [open]);
+
+  const scrollToSection = (target) => {
+    closeMenu();
+    if (target === "hero") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      onNavigate?.("hero");
+      return;
+    }
+    // Small delay so the close animation starts before scrolling
+    setTimeout(() => {
+      const section =
+        sectionRefs[target]?.current || document.getElementById(target);
+      if (!section) return;
+      section.scrollIntoView({ behavior: "smooth", block: "start" });
+      onNavigate?.(target);
+    }, 120);
+  };
 
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@700;800&display=swap');
-
-        /* ── Overlay backdrop ── */
         .om-overlay {
           position: fixed;
           inset: 0;
@@ -51,7 +63,6 @@ const OverlayMenu = forwardRef(function OverlayMenu(props, ref) {
           display: flex;
           flex-direction: column;
           background: #08080c;
-          font-family: 'DM Mono', monospace;
           overflow: hidden;
           clip-path: circle(0% at calc(100% - 42px) 42px);
           transition: clip-path 0.55s cubic-bezier(0.77,0,0.175,1);
@@ -63,7 +74,6 @@ const OverlayMenu = forwardRef(function OverlayMenu(props, ref) {
           pointer-events: all;
         }
 
-        /* Noise grain overlay */
         .om-overlay::before {
           content: '';
           position: absolute;
@@ -75,7 +85,6 @@ const OverlayMenu = forwardRef(function OverlayMenu(props, ref) {
           z-index: 0;
         }
 
-        /* Decorative large number bg */
         .om-bg-num {
           position: absolute;
           bottom: -40px;
@@ -91,7 +100,6 @@ const OverlayMenu = forwardRef(function OverlayMenu(props, ref) {
           transition: opacity 0.3s ease;
         }
 
-        /* ── Inner layout ── */
         .om-inner {
           position: relative;
           z-index: 1;
@@ -101,7 +109,6 @@ const OverlayMenu = forwardRef(function OverlayMenu(props, ref) {
           padding: 90px 32px 40px;
         }
 
-        /* ── Nav list ── */
         .om-nav {
           flex: 1;
           display: flex;
@@ -115,7 +122,12 @@ const OverlayMenu = forwardRef(function OverlayMenu(props, ref) {
           align-items: baseline;
           gap: 16px;
           padding: 14px 0;
+          border: none;
           border-bottom: 1px solid rgba(255,255,255,0.06);
+          background: transparent;
+          cursor: pointer;
+          text-align: left;
+          width: 100%;
           text-decoration: none;
           opacity: 0;
           transform: translateX(32px);
@@ -132,7 +144,6 @@ const OverlayMenu = forwardRef(function OverlayMenu(props, ref) {
         .om-overlay.animating .om-item:nth-child(3) { transition-delay: 0.25s; }
         .om-overlay.animating .om-item:nth-child(4) { transition-delay: 0.3s; }
         .om-overlay.animating .om-item:nth-child(5) { transition-delay: 0.35s; }
-        .om-overlay.animating .om-item:nth-child(6) { transition-delay: 0.4s; }
 
         .om-item:hover {
           border-bottom-color: rgba(255,255,255,0.2);
@@ -174,7 +185,6 @@ const OverlayMenu = forwardRef(function OverlayMenu(props, ref) {
           color: rgba(255,255,255,0.5);
         }
 
-        /* ── Footer ── */
         .om-footer {
           display: flex;
           align-items: center;
@@ -196,7 +206,9 @@ const OverlayMenu = forwardRef(function OverlayMenu(props, ref) {
           align-items: center;
           gap: 8px;
           color: rgba(255,255,255,0.35);
-          text-decoration: none;
+          background: transparent;
+          border: none;
+          cursor: pointer;
           font-size: 11px;
           letter-spacing: 0.1em;
           text-transform: uppercase;
@@ -206,29 +218,30 @@ const OverlayMenu = forwardRef(function OverlayMenu(props, ref) {
         .om-footer-home:hover { color: rgba(255,255,255,0.8); }
 
         .om-close {
-  position: absolute;
-  top: 24px;
-  right: 24px;
-  width: 44px;
-  height: 44px;
-  border: none;
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  cursor: pointer;
-  z-index: 10;
-  transition: all 0.2s ease;
-}
+          position: absolute;
+          top: 24px;
+          right: 24px;
+          width: 44px;
+          height: 44px;
+          border: none;
+          background: rgba(255,255,255,0.06);
+          color: rgba(255,255,255,0.7);
+          font-size: 28px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 50%;
+          cursor: pointer;
+          z-index: 10;
+          transition: all 0.2s ease;
+        }
 
-.om-close:hover {
-  background: rgba(255, 255, 255, 0.15);
-  color: #fff;
-  transform: rotate(90deg);
-}
+        .om-close:hover {
+          background: rgba(255,255,255,0.15);
+          color: #fff;
+          transform: rotate(90deg);
+        }
+
         .om-footer-tag {
           font-size: 10px;
           color: rgba(255,255,255,0.18);
@@ -238,32 +251,36 @@ const OverlayMenu = forwardRef(function OverlayMenu(props, ref) {
 
       {open && (
         <div className={`om-overlay${animating ? " animating" : ""}`}>
-          <button className="om-close" onClick={closeMenu}>
+          <button className="om-close" onClick={closeMenu} type="button">
             &times;
           </button>
-          <div className="om-bg-num">06</div>
+          <div className="om-bg-num">0{links.length}</div>
 
           <div className="om-inner">
             <nav className="om-nav">
-              {links.map(({ href, label, num }) => (
-                <Link
-                  key={href}
-                  href={href}
+              {links.map(({ target, label, num }) => (
+                <button
+                  key={target}
                   className="om-item"
-                  onClick={closeMenu}
+                  onClick={() => scrollToSection(target)}
+                  type="button"
                 >
                   <span className="om-num">{num}</span>
                   <span className="om-label">{label}</span>
                   <span className="om-arrow">→</span>
-                </Link>
+                </button>
               ))}
             </nav>
 
             <footer className="om-footer">
-              <Link href="/" className="om-footer-home" onClick={closeMenu}>
+              <button
+                className="om-footer-home"
+                onClick={() => scrollToSection("hero")}
+                type="button"
+              >
                 <FaHome size={12} />
                 Home
-              </Link>
+              </button>
               <span className="om-footer-tag">
                 Portfolio · {new Date().getFullYear()}
               </span>

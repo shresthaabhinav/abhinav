@@ -5,13 +5,13 @@ import Image from 'next/image';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { useRef } from 'react';
 
-import img1 from '../../../public/image/mardi.jpg';
-import img2 from '../../../public/image/mardi.jpg';
-import img3 from '../../../public/image/mardi.jpg';
-import img4 from '../../../public/image/mardi.jpg';
-import img5 from '../../../public/image/mardi.jpg';
-import img6 from '../../../public/image/mardi.jpg';
-import img7 from '../../../public/image/mardi.jpg';
+import img1 from '../../../public/image/cloud.jpg';
+import img2 from '../../../public/image/chair.jpg';
+import img3 from '../../../public/image/langtang.jpg';
+import img4 from '../../../public/image/north_abc.jpg';
+import img5 from '../../../public/image/lake.jpg';
+import img6 from '../../../public/image/dhumba.jpg';
+import img7 from '../../../public/image/anna.jpg';
 
 export default function Parallax() {
   const container = useRef(null);
@@ -36,17 +36,18 @@ export default function Parallax() {
   return (
     <>
     {/* Heading */}
-        <div className="flex flex-col items-center gap-3 mb-12">
+        <div id="gallery" className="scroll-mt-20 flex flex-col items-center gap-3 mb-12">
           <motion.h1
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
             viewport={{ once: true, amount: 0.5 }}
-            className="text-4xl sm:text-5xl md:text-6xl font-bold text-black"
+            className="text-3xl sm:text-5xl md:text-6xl font-bold text-black"
           >
-            Explore My Gallery
+            Take A Quick <span style={{ color: "#999999" }}>Glimpse</span>
           </motion.h1>
         </div>
+        
     <div ref={container} className={styles.container}>
       <div className={styles.sticky}>
         {pictures.map((src, index) => (

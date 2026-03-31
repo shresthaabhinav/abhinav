@@ -152,9 +152,9 @@ export default function Skills() {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
               viewport={{ once: true, amount: 0.5 }}
-              className="text-4xl sm:text-5xl md:text-6xl font-bold text-black"
+              className="text-3xl sm:text-5xl md:text-6xl font-bold text-black"
             >
-              How I built my skills
+              How I built my <span style={{ color: "#999999" }}>skills</span>
             </motion.h1>
           </div>
 

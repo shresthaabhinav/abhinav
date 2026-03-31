@@ -1,5 +1,5 @@
 import Navbar from "@/components/navbar.jsx";
-import Footer from "@/components/footer.jsx";
+import Contact from "@/sections/contact.jsx";
 import Link from "next/link";
 
 export default function NotFound() {
@@ -14,12 +14,12 @@ export default function NotFound() {
 
         {/* Back to Home Button */}
         <Link href="/">
-          <button className="mt-6 px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition duration-200">
+          <button className="mt-6 px-6 py-2 bg-black hover:bg-gray-900 text-white rounded-lg transition duration-200">
             Back to Home
           </button>
         </Link>
       </div>
-      <Footer />
+      <Contact />
     </>
   );
 }
