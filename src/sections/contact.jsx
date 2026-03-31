@@ -96,11 +96,7 @@ export default function Footer() {
           </p>
           <button
             onClick={scrollToTop}
-            className="flex items-center gap-2 px-4 py-2 rounded-full 
-                       border border-white/10 text-xs font-mono uppercase tracking-wider 
-                       text-white/60 hover:text-white hover:border-white/30 
-                       hover:bg-white/5 transition-all"
-          >
+            className="flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 text-xs font-mono uppercase tracking-wider text-white/60 hover:text-white hover:border-white/30 hover:bg-white/5 transition-all">
             Dont Press
           </button>
 
