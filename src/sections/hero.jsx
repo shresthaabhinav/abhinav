@@ -28,7 +28,6 @@ export default forwardRef(function Hero(props, ref) {
   }, [subIndex, index, deleting, roles]);
 
   return (
-    // ✅ ref on the root element, id="hero" for IntersectionObserver fallback
     <div ref={ref} id="hero">
       <div
         className="relative w-full min-h-screen flex items-center justify-center bg-cover bg-center"
@@ -40,7 +39,7 @@ export default forwardRef(function Hero(props, ref) {
           <div className="p-10 sm:p-16 flex flex-col items-center text-center w-full max-w-2xl">
 
             {/* Typewriter */}
-            <span className="mt-40 text-gray-300 text-lg mb-2">
+            <span className="mt-0 md:mt-40 text-gray-300 text-lg mb-2">
               {roles[index].substring(0, subIndex)}
               <span className="ml-0.5 inline-block w-px h-4 bg-gray-300 align-middle animate-pulse" />
             </span>
