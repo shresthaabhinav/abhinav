@@ -64,7 +64,7 @@ export default forwardRef(function Hero(props, ref) {
             {/* Buttons */}
             <div className="flex flex-col md:flex-row flex-wrap items-center justify-center md:justify-start gap-6 md:mr-16">
               <a
-                href="/cv.pdf"
+                href="public/cv/abhinav_shresthaCV.pdf"
                 download
                 className="border border-white/80 text-gray-200 px-8 py-3 text-xs tracking-widest uppercase relative overflow-hidden group"
               >
